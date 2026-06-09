@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Begrebshunden</title>
+  <style>
+    :root {
+      --ink: #172119;
+      --muted: #516059;
+      --paper: #fffdf6;
+      --line: #d9dfcf;
+      --sky: #a9d9f3;
+      --grass: #d8efbd;
+      --grass-dark: #93c76f;
+      --path: #d1a35f;
+      --water: #74bfe8;
+      --wood: #9a6335;
+      --danger: #c64c3e;
+      --ok: #2f7d55;
+      --focus: #245fbd;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      min-height: 100vh;
+      color: var(--ink);
+      background: linear-gradient(#ccecff 0 32%, #f7efd8 32% 100%);
+      overflow: hidden;
+    }
+
+    button {
+      color: inherit;
+      font: inherit;
+    }
+
+    .app {
+      height: 100vh;
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 12px clamp(12px, 3vw, 28px);
+      background: rgba(255, 253, 246, 0.93);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+      z-index: 3;
+    }
+
+    .question {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .question small {
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .question strong {
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      line-height: 1.25;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .hint-mobile {
+      display: none;
+    }
+
+    .stats {
+      display: flex;
+      align-items: center;
+      justify-content: end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      min-width: 78px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-weight: 900;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .restart {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .board-wrap {
+      position: relative;
+      min-height: 0;
+      padding: clamp(10px, 2.5vw, 24px);
+    }
+
+    .board {
+      position: relative;
+      width: min(100%, 1040px);
+      height: 100%;
+      min-height: 430px;
+      margin: 0 auto;
+      overflow: hidden;
+      border: 2px solid #8bb470;
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 13% 17%, rgba(255, 255, 255, 0.74) 0 5%, transparent 5.4%),
+        linear-gradient(var(--sky) 0 48%, transparent 48%),
+        linear-gradient(150deg, var(--grass) 0 54%, #f2df9a 54% 67%, var(--grass-dark) 67% 100%);
+      box-shadow: 0 16px 35px rgba(32, 48, 28, 0.16);
+      touch-action: none;
+    }
+
+    .lane-lines {
+      position: absolute;
+      inset: 16% 0 24%;
+      background:
+        linear-gradient(transparent 24%, rgba(255, 255, 255, 0.36) 24% 25%, transparent 25% 49%, rgba(255, 255, 255, 0.36) 49% 50%, transparent 50% 74%, rgba(255, 255, 255, 0.36) 74% 75%, transparent 75%);
+      opacity: 0.75;
+    }
+
+    .path {
+      position: absolute;
+      left: -4%;
+      right: -4%;
+      bottom: -3%;
+      height: 24%;
+      background: repeating-linear-gradient(100deg, var(--path) 0 28px, #bf8945 28px 50px);
+      transform: skewY(-2deg);
+      opacity: 0.88;
+    }
+
+    .bottom-boundary {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      border-top: 1px solid rgba(118, 139, 101, 0.45);
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .tree {
+      position: absolute;
+      left: 4%;
+      bottom: 14%;
+      width: 82px;
+      height: 155px;
+    }
+
+    .tree::before {
+      content: "";
+      position: absolute;
+      left: 34px;
+      bottom: 0;
+      width: 18px;
+      height: 82px;
+      background: var(--wood);
+      border-radius: 7px;
+    }
+
+    .tree::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 82px;
+      height: 94px;
+      background: #4f9a55;
+      border-radius: 50% 50% 44% 44%;
+      box-shadow: 24px 16px 0 #3f8848, -15px 20px 0 #63ab5c;
+    }
+
+    .target {
+      position: absolute;
+      width: clamp(136px, 18vw, 186px);
+      min-height: 62px;
+      display: grid;
+      place-items: center;
+      padding: 9px 11px;
+      border: 2px solid #6f8e57;
+      border-radius: 8px;
+      background: rgba(255, 253, 246, 0.97);
+      box-shadow: 0 6px 0 rgba(75, 98, 57, 0.18);
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.08;
+      overflow-wrap: anywhere;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+
+    .target::before {
+      content: "";
+      position: absolute;
+      left: -16px;
+      top: 50%;
+      width: 18px;
+      height: 22px;
+      border-radius: 50% 0 0 50%;
+      background: inherit;
+      border-left: 2px solid #6f8e57;
+      border-top: 2px solid #6f8e57;
+      border-bottom: 2px solid #6f8e57;
+      transform: translateY(-50%);
+    }
+
+    .target.hit {
+      border-color: var(--ok);
+      background: #e6f8eb;
+      animation: pop 280ms ease forwards;
+    }
+
+    .target.miss {
+      border-color: var(--danger);
+      background: #ffe9e5;
+      animation: wobble 260ms ease;
+    }
+
+    .shot {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #965a22;
+      border-radius: 50%;
+      background: #f7c66a;
+      box-shadow: inset -3px -3px 0 #e09b35, 0 4px 8px rgba(45, 55, 30, 0.22);
+      transform: translate(-50%, -50%);
+      z-index: 3;
+    }
+
+    .dog {
+      position: absolute;
+      width: clamp(78px, 11vw, 116px);
+      aspect-ratio: 1.35;
+      left: 50%;
+      bottom: 5%;
+      transform: translateX(-50%);
+      transition: left 90ms linear;
+      z-index: 4;
+      filter: drop-shadow(0 9px 7px rgba(38, 42, 24, 0.25));
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      max-width: min(92%, 590px);
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 253, 246, 0.96);
+      color: var(--ink);
+      font-weight: 900;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 150ms ease, transform 150ms ease;
+      z-index: 6;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 5px);
+    }
+
+    .controls {
+      display: none;
+      grid-template-columns: minmax(58px, 72px) minmax(78px, 96px) minmax(58px, 72px);
+      gap: clamp(6px, 2.5vw, 10px);
+      justify-content: center;
+      align-items: center;
+      padding: 10px 14px max(16px, env(safe-area-inset-bottom));
+      background: rgba(255, 253, 246, 0.94);
+      border-top: 1px solid var(--line);
+      z-index: 3;
+    }
+
+    .control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 56px;
+      line-height: 1;
+      border: 1px solid #9aa68e;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 1.45rem;
+      font-weight: 900;
+      box-shadow: 0 4px 0 #c9cec1;
+      touch-action: manipulation;
+    }
+
+    .control.fire {
+      background: var(--focus);
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .control:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #c9cec1;
+    }
+
+    .finish {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(20, 32, 24, 0.35);
+      z-index: 7;
+    }
+
+    .finish.show {
+      display: grid;
+    }
+
+    .dialog {
+      width: min(92vw, 430px);
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.22);
+      text-align: center;
+    }
+
+    .dialog h1 {
+      margin: 0 0 8px;
+      font-size: 1.6rem;
+      letter-spacing: 0;
+    }
+
+    .dialog p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .dialog button {
+      border: 0;
+      border-radius: 8px;
+      background: var(--focus);
+      color: #fff;
+      padding: 11px 16px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    @keyframes pop {
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.18);
+      }
+    }
+
+    @keyframes wobble {
+      0%, 100% {
+        transform: translate(-50%, -50%);
+      }
+      45% {
+        transform: translate(calc(-50% - 8px), -50%);
+      }
+      70% {
+        transform: translate(calc(-50% + 6px), -50%);
+      }
+    }
+
+    @media (hover: none), (pointer: coarse), (max-width: 760px) {
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .app {
+        height: 100dvh;
+        min-height: 100dvh;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        overflow: hidden;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .stats {
+        justify-content: start;
+      }
+
+      .board-wrap {
+        min-height: 0;
+        padding: 8px;
+      }
+
+      .board {
+        height: 100%;
+        min-height: 0;
+      }
+
+      .controls {
+        display: grid;
+        position: relative;
+        bottom: auto;
+        flex-shrink: 0;
+        padding-top: 8px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+      }
+
+      .hint-pc {
+        display: none;
+      }
+
+      .hint-mobile {
+        display: inline;
+      }
+
+      .target {
+        width: clamp(116px, 34vw, 144px);
+        min-height: 58px;
+        font-size: 0.84rem;
+      }
+
+      .tree {
+        transform: scale(0.76);
+        transform-origin: bottom left;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .topbar {
+        padding: 8px 10px;
+      }
+
+      .question strong {
+        font-size: 0.98rem;
+      }
+
+      .hint {
+        font-size: 0.82rem;
+      }
+
+      .pill {
+        min-width: 68px;
+        font-size: 0.88rem;
+      }
+
+      .control {
+        min-height: 50px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .controls {
+        grid-template-columns: minmax(52px, 1fr) minmax(68px, 1.2fr) minmax(52px, 1fr);
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .control {
+        min-height: 48px;
+      }
+    }
+
+    @media (max-height: 680px) and (max-width: 760px) {
+      .topbar {
+        padding-top: 6px;
+        padding-bottom: 6px;
+      }
+
+      .question {
+        gap: 3px;
+      }
+
+      .question strong {
+        font-size: 0.92rem;
+      }
+
+      .hint {
+        font-size: 0.76rem;
+      }
+
+      .pill {
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
+
+      .controls {
+        padding-top: 6px;
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+      }
+
+      .control {
+        min-height: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="question" aria-live="polite">
+        <small id="category">Begreb</small>
+        <strong id="question">Skyd kassen med det rigtige svar.</strong>
+        <span class="hint hint-pc">Brug højre og venstre pil til at gå til siden, og brug pil op til at skyde med.</span>
+        <span class="hint hint-mobile">Brug knapperne nederst, og tryk på Skyd for at skyde.</span>
+      </div>
+      <div class="stats">
+        <div class="pill" id="score">0 point</div>
+        <div class="pill" id="progress">1/10</div>
+        <button class="restart" id="restart" aria-label="Start forfra" title="Start forfra">↻</button>
+      </div>
+    </header>
+
+    <section class="board-wrap">
+      <div class="board" id="board" aria-label="Spilbane">
+        <div class="lane-lines"></div>
+        <div class="path"></div>
+        <div class="bottom-boundary"></div>
+        <div class="tree"></div>
+        <div class="toast" id="toast"></div>
+        <div class="finish" id="finish">
+          <div class="dialog">
+            <h1>Flot klaret</h1>
+            <p id="finishText"></p>
+            <button id="playAgain">Spil igen</button>
+          </div>
+        </div>
+        <div class="dog" id="dog" aria-hidden="true">
+          <svg viewBox="0 0 160 118" role="img" aria-label="Hund">
+            <path d="M31 72 C18 62 13 47 18 31 C23 18 35 18 43 29 C51 20 66 17 82 20 C103 23 118 36 123 55 C132 54 141 59 145 69 C150 82 143 96 130 98 C121 108 103 113 82 111 C51 108 29 93 31 72 Z" fill="#c97b42"/>
+            <path d="M122 54 C133 43 147 38 155 44 C151 58 140 66 126 68 Z" fill="#8b4f2f"/>
+            <path d="M30 32 C17 20 7 17 3 25 C2 42 13 52 27 55 Z" fill="#7b472d"/>
+            <path d="M45 31 C54 24 70 22 84 26 C75 36 60 40 45 31 Z" fill="#efc08e"/>
+            <circle cx="36" cy="44" r="5" fill="#191919"/>
+            <circle cx="33" cy="42" r="1.5" fill="#fff"/>
+            <path d="M18 55 C23 61 31 62 38 58" fill="none" stroke="#2a1710" stroke-width="4" stroke-linecap="round"/>
+            <path d="M72 76 C92 83 112 80 126 68" fill="none" stroke="#7c4428" stroke-width="5" stroke-linecap="round"/>
+            <path d="M50 102 L47 116 M91 107 L91 117 M116 97 L123 114" stroke="#6b3e2a" stroke-width="8" stroke-linecap="round"/>
+            <path d="M55 56 C67 66 85 68 100 59" fill="none" stroke="#f5d7b4" stroke-width="10" stroke-linecap="round"/>
+            <path d="M100 34 C112 38 119 47 121 59" fill="none" stroke="#a65f37" stroke-width="7" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <nav class="controls" aria-label="Styr hunden">
+      <button class="control" data-action="left" aria-label="Venstre">←</button>
+      <button class="control fire" data-action="fire" aria-label="Skyd">Skyd</button>
+      <button class="control" data-action="right" aria-label="Højre">→</button>
+    </nav>
+  </main>
+
+  <script>
+    const questions = [
+      {
+        category: "Appelformer",
+        prompt: "Hvilken appelform bygger især på afsenderens troværdighed?",
+        answer: "Etos",
+        choices: ["Etos", "Patos", "Logos", "Ydre personkarakteristik"]
+      },
+      {
+        category: "Appelformer",
+        prompt: "Hvilken appelform forsøger især at vække følelser hos modtageren?",
+        answer: "Patos",
+        choices: ["Logos", "Patos", "Jeg-fortæller", "Social personkarakteristik"]
+      },
+      {
+        category: "Appelformer",
+        prompt: "Hvilken appelform bruger argumenter, fakta og logik?",
+        answer: "Logos",
+        choices: ["Patos", "Logos", "Etos", "3. person-fortæller"]
+      },
+      {
+        category: "Personkarakteristik",
+        prompt: "Når vi får at vide, hvordan en person ser ud, er det ...",
+        answer: "Ydre personkarakteristik",
+        choices: ["Indre personkarakteristik", "Ydre personkarakteristik", "Logos", "Jeg-fortæller"]
+      },
+      {
+        category: "Personkarakteristik",
+        prompt: "Når vi lærer om en persons tanker, følelser og værdier, er det ...",
+        answer: "Indre personkarakteristik",
+        choices: ["Ydre personkarakteristik", "Patos", "Indre personkarakteristik", "3. person-fortæller"]
+      },
+      {
+        category: "Personkarakteristik",
+        prompt: "Når vi beskriver en persons familie, venner, job eller status, er det ...",
+        answer: "Social personkarakteristik",
+        choices: ["Social personkarakteristik", "Etos", "Indre personkarakteristik", "Logos"]
+      },
+      {
+        category: "Fortæller",
+        prompt: "Hvilken fortæller bruger 'jeg' og er selv en del af historien?",
+        answer: "Jeg-fortæller",
+        choices: ["3. person-fortæller", "Jeg-fortæller", "Etos", "Social personkarakteristik"]
+      },
+      {
+        category: "Fortæller",
+        prompt: "Hvilken fortæller bruger typisk 'han', 'hun' eller navne?",
+        answer: "3. person-fortæller",
+        choices: ["Patos", "Jeg-fortæller", "3. person-fortæller", "Ydre personkarakteristik"]
+      },
+      {
+        category: "Novelle",
+        prompt: "Når man præsenterer en novelle, bør man typisk nævne titel, forfatter, år og ...",
+        answer: "Genre",
+        choices: ["Genre", "Appelform", "Rubrik", "Synsvinkel"]
+      },
+      {
+        category: "Novelle",
+        prompt: "En kort fiktiv tekst med få personer og en koncentreret handling kaldes ofte en ...",
+        answer: "Novelle",
+        choices: ["Novelle", "Nyhedsartikel", "Debatindlæg", "Reportage"]
+      },
+      {
+        category: "Novelle",
+        prompt: "Når en novelle starter midt i handlingen uden lang indledning, kaldes det ...",
+        answer: "In medias res",
+        choices: ["In medias res", "Konklusion", "Manchet", "Kronologi"]
+      },
+      {
+        category: "Novelle",
+        prompt: "Den vigtigste konflikt i en fortælling kaldes ofte tekstens ...",
+        answer: "Konflikt",
+        choices: ["Konflikt", "Rubrik", "Fototekst", "Underoverskrift"]
+      },
+      {
+        category: "Fiktion og fakta",
+        prompt: "Tekster med opdigtede personer og begivenheder hører typisk til ...",
+        answer: "Fiktion",
+        choices: ["Fiktion", "Fakta", "Nyhed", "Argumentation"]
+      },
+      {
+        category: "Fiktion og fakta",
+        prompt: "Tekster, der vil informere om virkelige forhold, hører typisk til ...",
+        answer: "Fakta",
+        choices: ["Fakta", "Fiktion", "Symbolik", "Miljø"]
+      },
+      {
+        category: "Fiktion og fakta",
+        prompt: "Når en tekst blander virkelige oplysninger med opdigtede elementer, kan man tale om ...",
+        answer: "Faktion",
+        choices: ["Faktion", "Etos", "Besjæling", "Indre synsvinkel"]
+      },
+      {
+        category: "Artikelgenrer",
+        prompt: "Hvilken artikelgenre skal først og fremmest informere om noget aktuelt?",
+        answer: "Nyhedsartikel",
+        choices: ["Nyhedsartikel", "Essay", "Novelle", "Digt"]
+      },
+      {
+        category: "Artikelgenrer",
+        prompt: "Hvilken artikelgenre bygger ofte på journalistens besøg på stedet og sanseindtryk?",
+        answer: "Reportage",
+        choices: ["Reportage", "Leder", "Novelle", "Analyse"]
+      },
+      {
+        category: "Artikelgenrer",
+        prompt: "Hvilken artikelgenre giver plads til en persons egne svar og holdninger?",
+        answer: "Interview",
+        choices: ["Interview", "Nyhedsartikel", "Digt", "Referat"]
+      },
+      {
+        category: "Artikelgenrer",
+        prompt: "Hvilken teksttype forsøger at overbevise læseren om en bestemt holdning?",
+        answer: "Debatindlæg",
+        choices: ["Debatindlæg", "Miljøbeskrivelse", "Personkarakteristik", "Resumé"]
+      },
+      {
+        category: "Artikelgenrer",
+        prompt: "I en avisartikel kaldes den store overskrift typisk ...",
+        answer: "Rubrik",
+        choices: ["Rubrik", "Brødtekst", "Billedtekst", "Kilde"]
+      },
+      {
+        category: "Artikelgenrer",
+        prompt: "Den korte tekst under rubrikken, der uddyber nyheden, kaldes ofte ...",
+        answer: "Manchet",
+        choices: ["Manchet", "Metafor", "Miljø", "Motiv"]
+      },
+      {
+        category: "Billede og tekst",
+        prompt: "Når et billede viser det samme som teksten fortæller, siger man at billedet ... teksten.",
+        answer: "Understøtter",
+        choices: ["Understøtter", "Modsiger", "Fortæller i jeg-form", "Argumenterer med logos"]
+      },
+      {
+        category: "Billede og tekst",
+        prompt: "Hvis billedet giver en anden stemning end teksten, kan det skabe ...",
+        answer: "Kontrast",
+        choices: ["Kontrast", "Rubrik", "Synonym", "Kronologi"]
+      },
+      {
+        category: "Billede og tekst",
+        prompt: "Teksten under et billede i en artikel kaldes typisk ...",
+        answer: "Billedtekst",
+        choices: ["Billedtekst", "Manchet", "Komposition", "Tema"]
+      },
+      {
+        category: "Billede og tekst",
+        prompt: "Når man analyserer et billede, kan forgrund, mellemgrund og baggrund hjælpe med at forstå ...",
+        answer: "Komposition",
+        choices: ["Komposition", "Appelform", "Kildekritik", "Replik"]
+      },
+      {
+        category: "Sproglige virkemidler",
+        prompt: "Når noget beskrives som noget andet, fx 'livet er en rejse', er det en ...",
+        answer: "Metafor",
+        choices: ["Metafor", "Rubrik", "Nyhedstrekant", "3. person-fortæller"]
+      },
+      {
+        category: "Sproglige virkemidler",
+        prompt: "Når man sammenligner med ord som 'som' eller 'ligesom', er det en ...",
+        answer: "Sammenligning",
+        choices: ["Sammenligning", "Etos", "Miljø", "Manchet"]
+      },
+      {
+        category: "Sproglige virkemidler",
+        prompt: "Når en ting får menneskelige egenskaber, fx 'vinden hvisker', kaldes det ...",
+        answer: "Besjæling",
+        choices: ["Besjæling", "Reportage", "Fakta", "Ydre karakteristik"]
+      },
+      {
+        category: "Sproglige virkemidler",
+        prompt: "Når et ord gentages flere gange for at skabe tryk eller rytme, kaldes det ...",
+        answer: "Gentagelse",
+        choices: ["Gentagelse", "Synsvinkel", "Fototekst", "Kilde"]
+      },
+      {
+        category: "Sproglige virkemidler",
+        prompt: "Et spørgsmål, hvor afsenderen ikke forventer et egentligt svar, kaldes et ...",
+        answer: "Retorisk spørgsmål",
+        choices: ["Retorisk spørgsmål", "Interview", "Kronologi", "Miljø"]
+      },
+      {
+        category: "Komposition",
+        prompt: "Rækkefølgen og opbygningen i en tekst kaldes tekstens ...",
+        answer: "Komposition",
+        choices: ["Komposition", "Etos", "Billedtekst", "Synonym"]
+      },
+      {
+        category: "Komposition",
+        prompt: "Når begivenheder fortælles i den rækkefølge, de sker, kaldes det ...",
+        answer: "Kronologisk",
+        choices: ["Kronologisk", "Faktion", "Patos", "Indre karakteristik"]
+      },
+      {
+        category: "Tema og motiv",
+        prompt: "Det konkrete, teksten handler om på overfladen, kaldes ofte ...",
+        answer: "Motiv",
+        choices: ["Motiv", "Tema", "Rubrik", "Etos"]
+      },
+      {
+        category: "Tema og motiv",
+        prompt: "Den større idé eller problemstilling bag teksten kaldes ofte ...",
+        answer: "Tema",
+        choices: ["Tema", "Billedtekst", "Manchet", "Fortæller"]
+      },
+      {
+        category: "Miljø",
+        prompt: "Tid, sted og omgivelser i en fortælling hører især til tekstens ...",
+        answer: "Miljø",
+        choices: ["Miljø", "Rubrik", "Appelform", "Fototekst"]
+      },
+      {
+        category: "Argumentation",
+        prompt: "Det, afsenderen mener eller vil overbevise modtageren om, kaldes en ...",
+        answer: "Påstand",
+        choices: ["Påstand", "Besjæling", "Novelle", "Billedtekst"]
+      },
+      {
+        category: "Argumentation",
+        prompt: "Det, der støtter en påstand i en argumenterende tekst, kaldes et ...",
+        answer: "Belæg",
+        choices: ["Belæg", "Miljø", "Rubrik", "Motiv"]
+      }
+    ];
+
+    const board = document.getElementById("board");
+    const dog = document.getElementById("dog");
+    const categoryEl = document.getElementById("category");
+    const questionEl = document.getElementById("question");
+    const scoreEl = document.getElementById("score");
+    const progressEl = document.getElementById("progress");
+    const toast = document.getElementById("toast");
+    const finish = document.getElementById("finish");
+    const finishText = document.getElementById("finishText");
+    const restart = document.getElementById("restart");
+    const playAgain = document.getElementById("playAgain");
+    const controls = document.querySelectorAll(".control");
+
+    const lanes = [22, 35, 48, 61];
+    let currentQuestions = [];
+    let questionIndex = 0;
+    let score = 0;
+    let dogX = 50;
+    let targets = [];
+    let shots = [];
+    let activeKeys = new Set();
+    let loopTimer = null;
+    let lastFrame = 0;
+    let locked = false;
+    let nextQuestionTimer = null;
+    let lastShotAt = 0;
+
+    function shuffle(list) {
+      return [...list].sort(() => Math.random() - 0.5);
+    }
+
+    function shuffleQuestions() {
+      currentQuestions = shuffle(questions);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function updateStats() {
+      scoreEl.textContent = `${score} point`;
+      progressEl.textContent = `${Math.min(questionIndex + 1, currentQuestions.length)}/${currentQuestions.length}`;
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1300);
+    }
+
+    function setDogX(value) {
+      dogX = clamp(value, 10, 90);
+      dog.style.left = `${dogX}%`;
+    }
+
+    function clearRound() {
+      window.clearTimeout(nextQuestionTimer);
+      window.clearInterval(loopTimer);
+      targets.forEach((target) => target.el.remove());
+      shots.forEach((shot) => shot.el.remove());
+      targets = [];
+      shots = [];
+      activeKeys.clear();
+    }
+
+    function renderQuestion() {
+      locked = false;
+      clearRound();
+      const current = currentQuestions[questionIndex];
+      categoryEl.textContent = current.category;
+      questionEl.textContent = current.prompt;
+      updateStats();
+      setDogX(50);
+
+      shuffle(current.choices).forEach((choice, index) => {
+        const el = document.createElement("button");
+        el.className = "target";
+        el.type = "button";
+        el.textContent = choice;
+        el.dataset.answer = choice;
+        el.style.left = `${118 + index * 30}%`;
+        el.style.top = `${lanes[index]}%`;
+        board.appendChild(el);
+        targets.push({
+          el,
+          answer: choice,
+          x: 118 + index * 30,
+          y: lanes[index],
+          speed: 4.5 + index * 0.45
+        });
+      });
+
+      lastFrame = performance.now();
+      window.clearInterval(loopTimer);
+      loopTimer = window.setInterval(tick, 1000 / 60);
+    }
+
+    function fireShot() {
+      if (locked) return;
+      const now = performance.now();
+      if (now - lastShotAt < 320) return;
+      lastShotAt = now;
+
+      const el = document.createElement("div");
+      el.className = "shot";
+      board.appendChild(el);
+      const shot = { el, x: dogX, y: 79, speed: 44 };
+      shots.push(shot);
+      positionShot(shot);
+    }
+
+    function positionTarget(target) {
+      target.el.style.left = `${target.x}%`;
+      target.el.style.top = `${target.y}%`;
+    }
+
+    function positionShot(shot) {
+      shot.el.style.left = `${shot.x}%`;
+      shot.el.style.top = `${shot.y}%`;
+    }
+
+    function rectsTouch(a, b) {
+      return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    }
+
+    function tick() {
+      const now = performance.now();
+      const dt = Math.min((now - lastFrame) / 1000, 0.05);
+      lastFrame = now;
+
+      if (!locked) {
+        if (activeKeys.has("left")) setDogX(dogX - 42 * dt);
+        if (activeKeys.has("right")) setDogX(dogX + 42 * dt);
+
+        targets.forEach((target) => {
+          target.x -= target.speed * dt;
+          positionTarget(target);
+        });
+
+        shots.forEach((shot) => {
+          shot.y -= shot.speed * dt;
+          positionShot(shot);
+        });
+
+        shots = shots.filter((shot) => {
+          if (shot.y > 6) return true;
+          shot.el.remove();
+          return false;
+        });
+
+        checkHits();
+
+        if (!locked && targets.every((target) => target.x < -18)) {
+          missRound("Kasserne slap forbi. Prøv næste spørgsmål.");
+        }
+      }
+
+    }
+
+    function checkHits() {
+      for (const shot of shots) {
+        const shotRect = shot.el.getBoundingClientRect();
+        const target = targets.find((item) => rectsTouch(shotRect, item.el.getBoundingClientRect()));
+        if (!target) continue;
+        shot.el.remove();
+        shots = shots.filter((item) => item !== shot);
+        chooseTarget(target);
+        return;
+      }
+    }
+
+    function chooseTarget(target) {
+      if (locked) return;
+      locked = true;
+      const current = currentQuestions[questionIndex];
+      const correct = target.answer === current.answer;
+
+      target.el.classList.add(correct ? "hit" : "miss");
+      if (correct) {
+        score += 1;
+        showToast("Rigtigt!");
+      } else {
+        const rightTarget = targets.find((item) => item.answer === current.answer);
+        if (rightTarget) rightTarget.el.classList.add("hit");
+        showToast(`Næsten. Det rigtige svar var ${current.answer}.`);
+      }
+
+      updateStats();
+      nextQuestionTimer = window.setTimeout(nextQuestion, 1200);
+    }
+
+    function missRound(message) {
+      locked = true;
+      const current = currentQuestions[questionIndex];
+      const rightTarget = targets.find((item) => item.answer === current.answer);
+      if (rightTarget) rightTarget.el.classList.add("hit");
+      showToast(message);
+      nextQuestionTimer = window.setTimeout(nextQuestion, 1250);
+    }
+
+    function nextQuestion() {
+      questionIndex += 1;
+      if (questionIndex >= currentQuestions.length) {
+        finishGame();
+      } else {
+        renderQuestion();
+      }
+    }
+
+    function finishGame() {
+      clearRound();
+      progressEl.textContent = `${currentQuestions.length}/${currentQuestions.length}`;
+      finishText.textContent = `Du fik ${score} ud af ${currentQuestions.length} rigtige.`;
+      finish.classList.add("show");
+      window.clearInterval(loopTimer);
+    }
+
+    function restartGame() {
+      questionIndex = 0;
+      score = 0;
+      shuffleQuestions();
+      finish.classList.remove("show");
+      renderQuestion();
+    }
+
+    document.addEventListener("keydown", (event) => {
+      const map = {
+        ArrowLeft: "left",
+        ArrowRight: "right"
+      };
+
+      if (map[event.key]) {
+        event.preventDefault();
+        activeKeys.add(map[event.key]);
+        setDogX(dogX + (map[event.key] === "left" ? -3.5 : 3.5));
+      }
+
+      if (event.key === " " || event.key === "ArrowUp" || event.key === "Enter") {
+        event.preventDefault();
+        fireShot();
+      }
+    });
+
+    document.addEventListener("keyup", (event) => {
+      if (event.key === "ArrowLeft") activeKeys.delete("left");
+      if (event.key === "ArrowRight") activeKeys.delete("right");
+    });
+
+    controls.forEach((button) => {
+      const action = button.dataset.action;
+      button.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        button.setPointerCapture(event.pointerId);
+        if (action === "fire") {
+          fireShot();
+        } else {
+          activeKeys.add(action);
+        }
+      });
+      button.addEventListener("pointerup", () => activeKeys.delete(action));
+      button.addEventListener("pointercancel", () => activeKeys.delete(action));
+      button.addEventListener("pointerleave", () => activeKeys.delete(action));
+    });
+
+    restart.addEventListener("click", restartGame);
+    playAgain.addEventListener("click", restartGame);
+    window.addEventListener("blur", () => activeKeys.clear());
+    shuffleQuestions();
+    renderQuestion();
+  </script>
+</body>
+</html>
